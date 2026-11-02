@@ -61,7 +61,7 @@ flowchart LR
 
 | Network | CIDR | Gateway | Purpose |
 |---|---|---|---|
-| ISP LAN | 192.168.1.0/24 | 192.168.1.1 (ISP router) | Household devices. MikroTik WAN `ether1` = 192.168.1.50 (DHCP reservation, DMZ host) |
+| ISP LAN | 192.168.1.0/24 | 192.168.1.1 (ISP router, Movistar GPT-2541GNAC) | Household devices. MikroTik WAN `ether1` = 192.168.1.50 (DHCP reservation, DMZ host) |
 | people | 192.168.10.0/24 | 192.168.10.1 (MikroTik) | Home-devices network on the MikroTik — **unused** (household uses ISP Wi-Fi) |
 | home-lab | 192.168.11.0/24 | 192.168.11.1 (MikroTik) | All home-lab hardware, VMs and containers |
 | WireGuard | 10.255.255.0/24 | 10.255.255.1 (MikroTik `wg1`) | Remote clients; each peer gets a /32 |
@@ -88,8 +88,14 @@ How a request reaches a service:
 
 1. Public DNS at OVH points `*.begoodguys.ovh` to the MikroTik DynDNS name, i.e. the ISP fiber public IP.
 2. The ISP router forwards everything to its DMZ host (the MikroTik); the MikroTik dst-nats TCP 80/443 to
-   **Nginx Proxy Manager** (NPM). Lab and VPN clients resolve the same public IP and reach NPM through **hairpin NAT**.
+   **Nginx Proxy Manager** (NPM) (its NAT rules 2/3, the only dst-NAT rules left). Lab and VPN clients resolve the same
+   public IP and reach NPM through **hairpin NAT**.
 3. NPM terminates TLS and reverse-proxies to the backend: an LXC container with Docker on Proxmox, or the k3s ingress.
+
+> **Public reachability (verified 2026-11-02).** Because of the DMZ strategy, every service published through NPM is
+> **reachable from the Internet**, not only from the LAN/VPN. Verified with external probes (check-host.net):
+> `http://vaultwarden.begoodguys.ovh/` answers 301 and `https://` serves the Vaultwarden login page. See
+> [Security](#security).
 
 | Service | URL | Runs on | Details in |
 |---|---|---|---|
@@ -165,13 +171,22 @@ readings when available.
 
 ## Security
 
-- **No service is intended to be exposed to the internet.** The catalog is meant for clients on the home-lab
-  network and WireGuard VPN clients only — not even devices on the ISP LAN. In practice, remote access to
-  services means connecting to the WireGuard VPN first.
-- WAN traffic reaches the MikroTik only because it is the ISP router's DMZ host; the MikroTik is the lab's only
-  edge firewall.
+- **Standing exposure / known risk: the whole catalog is public.** The intent is that services are reachable from
+  the home-lab network and WireGuard VPN clients only (not even the ISP LAN), but the DMZ strategy contradicts it:
+  WAN 80/443 are dst-NATed to Nginx Proxy Manager, so **every service published through NPM is reachable from the
+  Internet** (verified 2026-11-02, see [Domain & service catalog](#domain--service-catalog)). The only enforcement is
+  **NPM access lists**: the router has no `input`/`forward` drops and no source restriction on the dst-NAT rules.
+  Until that is fixed (restrict the dst-NAT/forward path to lab + VPN sources, or accept the exposure per service),
+  treat every catalog service as Internet-facing: keep strong authentication and NPM access lists on each one.
+- WAN traffic reaches the MikroTik only because it is the ISP router's DMZ host (Movistar GPT-2541GNAC, DMZ host
+  192.168.1.50); the MikroTik is the lab's only edge firewall, and currently filters nothing inbound (see above).
 - TLS is terminated at Nginx Proxy Manager for every `*.begoodguys.ovh` name.
 - Router management is done over WireGuard or from the ISP LAN.
-- Known gaps and their fixes are tracked in the repo that owns the component — notably, how the gateway
-  enforces (or does not yet enforce) lab/VPN-only access to 80/443 is documented in
+- Known gaps and their fixes are tracked in the repo that owns the component, including the gateway's missing
+  lab/VPN-only enforcement, the NAT rule details and the 2026-11-02 legacy-rule cleanup and 443 fix (a DMZ-arriving
+  packet has dst 192.168.1.50, the router's own address, so `dst-address-type=unicast` on the 443 rule never
+  matched), in
   [home-lab-mikrotik-gateway-iac](https://github.com/bounteous17/home-lab-mikrotik-gateway-iac).
+- **Diagnosing ingress problems:** test from *outside* the network (e.g. check-host.net) and compare
+  `/ip firewall nat print stats` counters before/after; internal tests pass via hairpin NAT even when the WAN path is
+  broken.

@@ -50,7 +50,7 @@ A new catalog service usually touches two repos: the one that runs it, plus this
 
 | Target | How |
 |---|---|
-| MikroTik | `ssh bounteous@192.168.11.1` |
+| MikroTik | `ssh bounteous@192.168.11.1` (key auth; read-only by default; see that repo's `AGENTS.md`) |
 | Proxmox API | `proxmox` MCP server (node 192.168.11.100, read-only audit token) |
 | Proxmox nodes | `ssh root@192.168.11.100` (`panda`), `ssh root@192.168.11.101` (`octopus`) |
 | Raspberry Pis | `ssh bounteous@192.168.11.{150,151,48,49}` |
