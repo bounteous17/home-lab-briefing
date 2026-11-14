@@ -10,7 +10,7 @@ All repos live under `github.com/bounteous17` and are cloned as siblings of this
 
 | Repository | Scope | Source of truth for | Live system |
 |---|---|---|---|
-| `home-lab-briefing` | Hub / welcome page | CIDR plan, `*.begoodguys.ovh` service catalog, hardware inventory, energy cost, lab-wide security posture, repo map | — |
+| `home-lab-briefing` | Hub / welcome page | CIDR plan and per-range address allocation (README "Network plan"), `*.begoodguys.ovh` service catalog, hardware inventory, energy cost, lab-wide security posture, repo map | — |
 | `home-lab-mikrotik-gateway-iac` | MikroTik RB2011 gateway (RouterOS 7) | Interfaces & bridges, port map, DHCP servers & reservations, DNS, firewall filter, NAT & hairpin NAT, WireGuard, router management | `ssh bounteous@192.168.11.1` |
 | `home-lab-proxmox-ansible` | Proxmox VE cluster (`panda`, `octopus`) | Nodes, quorum, HA, storage, replication, backups, Proxmox networking, every VM/LXC (incl. Nginx Proxy Manager proxy hosts and LXC apps) | `proxmox` MCP server; `ssh root@192.168.11.100/.101` |
 | `home-lab-k3s-ansible` | k3s cluster provisioning | Control-plane VM and Raspberry Pi agents: OS prep, k3s install/upgrade, node config | `ssh bounteous@<pi-ip>` |
@@ -53,6 +53,6 @@ A new catalog service usually touches two repos: the one that runs it, plus this
 | MikroTik | `ssh bounteous@192.168.11.1` (key auth; read-only by default; see that repo's `AGENTS.md`) |
 | Proxmox API | `proxmox` MCP server (node 192.168.11.100, read-only audit token) |
 | Proxmox nodes | `ssh root@192.168.11.100` (`panda`), `ssh root@192.168.11.101` (`octopus`) |
-| Raspberry Pis | `ssh bounteous@192.168.11.{150,151,48,49}` |
+| Raspberry Pis | `ssh bounteous@192.168.11.{50,51,52,53}` (`eagle`, `lion`, `penguin`, `shark`) |
 
 SSH keys are provided by the operator's environment; they are never stored in these repos.

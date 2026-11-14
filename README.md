@@ -66,17 +66,22 @@ flowchart LR
 | home-lab | 192.168.11.0/24 | 192.168.11.1 (MikroTik) | All home-lab hardware, VMs and containers |
 | WireGuard | 10.255.255.0/24 | 10.255.255.1 (MikroTik `wg1`) | Remote clients; each peer gets a /32 |
 
-Addressing conventions inside 192.168.11.0/24:
+Address plan inside 192.168.11.0/24. Each range is allocated **sequentially from its lowest free address**
+(no gaps; a freed address is reused by the next guest):
 
-| Range / IP | Used by |
-|---|---|
-| .1 | MikroTik gateway |
-| .47 | `k3s-control-plane` VM |
-| .48, .49, .150, .151 | Raspberry Pi k3s agents (`penguin`, `shark`, `lion`, `eagle`) |
-| .50 | Nginx Proxy Manager (LXC) |
-| .51 | Vaultwarden (LXC) |
-| .100, .101 | Proxmox nodes `panda`, `octopus` |
+| Range | Reserved for | Allocated |
+|---|---|---|
+| .1 | MikroTik gateway | `.1` |
+| .2–.9 | Free for future use | — |
+| .10–.29 | Proxmox LXCs | `.10` Nginx Proxy Manager, `.11` Vaultwarden |
+| .30–.49 | Proxmox VMs | `.30` `k3s-control-plane` |
+| .50–.59 | Raspberry Pis (k3s agents) | `.50` `eagle`, `.51` `lion`, `.52` `penguin`, `.53` `shark` (alphabetical) |
+| .60–.99 | Free for future use | — |
+| .100–.109 | **Proxmox host machines** (the mini PCs) | `.100` `panda`, `.101` `octopus` |
+| .110–.199 | Free for future use | — |
+| .200–.254 | DHCP pool (dynamic leases only) | — |
 
+Everything below `.200` is static or a router reservation, so the DHCP pool never overlaps a planned address.
 DHCP reservations, bridges and port mapping live in
 [home-lab-mikrotik-gateway-iac](https://github.com/bounteous17/home-lab-mikrotik-gateway-iac).
 
@@ -123,7 +128,7 @@ Raspberry Pis and the control-plane VM are too small for media transcoding and M
 |---|---|---|---|---|---|---|
 | MikroTik RB2011UiAS-2HnD | 1 | — | 192.168.11.1 (lab), 192.168.1.50 (WAN) | MIPS 600 MHz, 128 MB RAM, 5× GbE + 5× FE ports | RouterOS 7.24.4 | Lab gateway, firewall, DHCP, WireGuard |
 | Intel N95 mini PC | 2 | `panda`, `octopus` | .100, .101 | 4 cores, 8 GB RAM, 256 GB SATA SSD (ZFS) + 960 GB SATA SSD (spare) | Proxmox VE 9.2.2 (Debian 13) | Proxmox cluster nodes |
-| Raspberry Pi 4 Model B (4 GB) | 4 | `home-lab-k3s-cluster-prod-<animal>`: `lion`, `eagle`, `shark`, `penguin` | .150, .151, .49, .48 | Cortex-A72 4 cores, 4 GB RAM, 64 GB microSD | Debian 13 (Raspberry Pi kernel 6.18) | k3s agents |
+| Raspberry Pi 4 Model B (4 GB) | 4 | `home-lab-k3s-cluster-prod-<animal>`: `eagle`, `lion`, `penguin`, `shark` | .50, .51, .52, .53 | Cortex-A72 4 cores, 4 GB RAM, 64 GB microSD | Debian 13 (Raspberry Pi kernel 6.18) | k3s agents |
 | 5-port gigabit switch (unmanaged) | 1 | — | — | 5× RJ45 1 GbE | — | Fan-out for lab devices |
 | USB multi-port power hub | 1 | — | — | — | — | Powers the Raspberry Pis |
 | UPS (battery) | 1 | — | — | — | — | Keeps all home-lab hardware **and the ISP router** powered during outages |
