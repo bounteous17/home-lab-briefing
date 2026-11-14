@@ -45,6 +45,9 @@ A new catalog service usually touches two repos: the one that runs it, plus this
    don't add IaC code unless the task explicitly asks for it.
 7. **Per-repo work runs in its own agent session** started in that repo's directory (Herdr tab,
    `claude --model claude-sonnet-5-5 --effort medium`), coordinated from this repo.
+8. **Push over SSH.** Every repo's `origin` is `git@github.com:bounteous17/<repo>.git`; use a plain `git push`
+   with the operator's SSH key. Do not switch remotes to HTTPS, embed tokens in URLs, or use credential-helper
+   workarounds. Commit locally by default and push only when the operator asks; never force-push.
 
 ## Access cheat-sheet
 
@@ -55,4 +58,5 @@ A new catalog service usually touches two repos: the one that runs it, plus this
 | Proxmox nodes | `ssh root@192.168.11.100` (`panda`), `ssh root@192.168.11.101` (`octopus`) |
 | Raspberry Pis | `ssh bounteous@192.168.11.{50,51,52,53}` (`eagle`, `lion`, `penguin`, `shark`) |
 
-SSH keys are provided by the operator's environment; they are never stored in these repos.
+SSH keys are provided by the operator's environment; they are never stored in these repos. Their file
+permissions are set deliberately by the operator, so do not change them.
